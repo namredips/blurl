@@ -1,0 +1,13 @@
+[template]
+src   = "nginx.conf.tmpl"
+dest  = "/etc/nginx/conf.d/nginx.conf"
+owner = "root"
+group = "root"
+mode  = "0644"
+keys = [
+  "listen_port",
+  "domain_name",
+  "client_max_body_size",
+  "api_host",
+  "api_port",
+]

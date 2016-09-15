@@ -1,0 +1,6 @@
+packages:
+  - python34
+  - curl
+
+python_packages:
+  - ipython

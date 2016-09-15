@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: False
+  roles:
+     - common
+
+- hosts: blurl_nodes
+  become: yes
+  gather_facts: False
+  roles:
+     - docker

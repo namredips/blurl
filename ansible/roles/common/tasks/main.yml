@@ -1,0 +1,19 @@
+---
+# Tasks file for centos common
+
+- name: Ensure EPEL is installed
+  yum: name=epel-release update_cache=yes state=latest
+
+- name: Install common packages
+  yum: name={{ item }} update_cache=yes state=latest
+  with_items: "{{ packages }}"
+
+- name: Get pip installer
+  get_url: url=https://bootstrap.pypa.io/get-pip.py dest=/tmp
+
+- name: install pip
+  command: /usr/bin/python3.4 /tmp/get-pip.py
+
+- name: install common python requirements
+  pip: name={{ item }} executable="pip3"
+  with_items: "{{ python_packages }}"

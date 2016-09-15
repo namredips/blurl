@@ -1,0 +1,31 @@
+# Base compose file
+
+version: "2.0"
+
+services:
+  data:
+    image: busybox
+    volumes:
+      - /data/db
+
+  mongodb:
+    image: mongo
+    volumes_from:
+      - data
+
+  api:
+    build: ./api
+    image: api
+    depends_on:
+      - mongodb
+    links:
+      - mongodb:mongodb
+
+nginx:
+    build: ./nginx
+    image: nginx
+    depends_on:
+      - api
+    links:
+      - api:api
+

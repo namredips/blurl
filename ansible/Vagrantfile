@@ -1,0 +1,52 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos/7"
+  config.vm.define "perf_test", autostart: false do |perf_test|
+    perf_test.vm.hostname = 'blurl-perf-vm'
+    perf_test.vm.network "forwarded_port", guest: 8000, host: 8000
+    perf_test.vm.synced_folder ".", "/home/vagrant/blurl"
+
+    perf_test.vm.provider :google do |google, override|
+      override.ssh.private_key_path = '~/.ssh/id_rsa'
+      override.ssh.username = 'vagrant'
+      override.ssh.pty = true
+      override.vm.box = 'gce'
+      override.vm.box_url = "https://github.com/mitchellh/vagrant-google/raw/master/google.box"
+      google.google_project_id = "blurl"
+      google.google_client_email = "275071835772-compute@developer.gserviceaccount.com"
+      google.google_json_key_location = "/Users/jefcox/blurl-key.json"
+      google.image = 'centos-7-v20160803'
+      google.machine_type = 'n1-standard-16'
+    end
+
+     perf_test.vm.provision "ansible" do |ansible|
+      ansible.groups = {
+       "blurl_nodes" => ["perf_test"]
+      }
+      ansible.verbose = "vv"
+      ansible.playbook = "ansible/site.yml"
+     end
+  end
+
+  config.vm.define "local_dev", primary: true do |local_dev|
+    local_dev.vm.hostname = 'blurl-dev-vm'
+    local_dev.vm.network "forwarded_port", guest: 8000, host: 8000
+    local_dev.vm.network "forwarded_port", guest: 5555, host: 5555
+    local_dev.vm.synced_folder ".", "/home/vagrant/blurl"
+
+    local_dev.vm.provider "virtualbox" do |vb|
+       vb.memory = "1024"
+       vb.cpus = "1"
+     end
+
+     local_dev.vm.provision "ansible" do |ansible|
+      ansible.groups = {
+       "blurl_nodes" => ["local_dev"]
+      }
+      ansible.verbose = "vv"
+      ansible.playbook = "ansible/site.yml"
+     end
+  end
+end

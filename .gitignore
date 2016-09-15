@@ -1,0 +1,13 @@
+.idea
+__pycache__
+.DS_*
+.ropeproject
+*.pyc
+.vagrant
+*.swp
+midas_settings.py
+django_midas/django_midas/settings.py
+venv-*
+debug.log
+error.log
+django_midas/static/docstorage

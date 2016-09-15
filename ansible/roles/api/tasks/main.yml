@@ -1,0 +1,12 @@
+---
+# tasks file for api services
+
+- name: Create api container
+  docker_container:
+    name: api
+    state: started
+    restart_policy: always
+    image: "{{api_image}}"
+    pull: true
+    links:
+      - "api:api"

@@ -1,0 +1,15 @@
+---
+# Tasks file for docker
+
+- name: upgrade all packages
+  yum: name=* update_cache=yes state=latest
+
+- name: install docker
+  shell: curl -fsSL https://get.docker.com/ | sh
+
+- name: Install essential python docker packages
+  pip: name={{ item }} executable="pip3"
+  with_items: "{{ python_packages }}"
+
+- name: Make sure Docker is running
+  service: name=docker state=running enabled=true
