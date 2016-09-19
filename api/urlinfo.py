@@ -1,6 +1,8 @@
 import falcon
 import binascii
-import json
+from middleware import JSONTranslator
+from middleware import RequireJSON
+# import json
 
 
 class URLInfo(object):
@@ -54,14 +56,17 @@ class URLInfo(object):
                 binascii.crc32(bytearray(req.query_string, 'utf-8')))
 
         resp.status = falcon.HTTP_200
-        resp.body = json.dumps("{'found': " +
-                               str(self._match(crc32_hostname_port,
-                                               crc32_query_name,
-                                               crc32_query_string)) +
-                               "}")
+        req.context['result'] = str(self._match(crc32_hostname_port,
+                                                crc32_query_name,
+                                                crc32_query_string))
 
+    def on_post(self, req, resp):
+        pass
 
-app = falcon.API()
+app = falcon.API(middleware=[
+    RequireJSON(),
+    JSONTranslator(),
+])
 urlinfo = URLInfo()
 template = '/urlinfo/1/{hostname_port}/{query_name}'
 app.add_route(template, urlinfo)

@@ -21,7 +21,7 @@ services:
     links:
       - mongodb:mongodb
 
-nginx:
+  nginx:
     build: ./nginx
     image: nginx
     depends_on:
