@@ -6,7 +6,9 @@ services:
   data:
     image: busybox
     volumes:
-      - /data/db
+      - ./data:/data/db
+    entrypoint:
+      - "/bin/true"
 
   mongodb:
     image: mongo
