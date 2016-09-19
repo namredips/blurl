@@ -1,8 +1,8 @@
 import falcon
 import binascii
+from pymongo import MongoClient
 from middleware import JSONTranslator
 from middleware import RequireJSON
-# import json
 
 
 class URLInfo(object):
@@ -17,6 +17,26 @@ class URLInfo(object):
                 'b9bfeca4': ['3fae0229', 'b9bfeca4']
             }
         }
+
+    def _compress_url(self,
+                      hostname_port,
+                      query_name=None,
+                      query_string=None):
+
+        crc32_hostname_port = "{:x}".format(
+            binascii.crc32(bytearray(hostname_port, 'utf-8')))
+
+        crc32_query_name = None
+        if query_name:
+            crc32_query_name = "{:x}".format(
+                binascii.crc32(bytearray(query_name, 'utf-8')))
+
+        crc32_query_string = None
+        if query_string:
+            crc32_query_string = "{:x}".format(
+                binascii.crc32(bytearray(query_string, 'utf-8')))
+
+        return crc32_hostname_port, crc32_query_name, crc32_query_string
 
     def _match(self, hostname_port, query_name=None, query_string=None):
         is_match = False
@@ -42,26 +62,39 @@ class URLInfo(object):
                hostname_port,
                query_name=None):
 
-        crc32_hostname_port = "{:x}".format(
-            binascii.crc32(bytearray(hostname_port, 'utf-8')))
+        c_hp, c_qn, c_qs = self._compress_url(hostname_port,
+                                              query_name,
+                                              req.query_string)
+        resp.status = falcon.HTTP_200
+        req.context['result'] = str(self._match(c_hp, c_qn, c_qs))
 
-        crc32_query_name = None
+    def on_post(self, req, resp, hostname_port, query_name=None):
+        client = MongoClient('mongodb://mongodb:27017/')
+        db = client.blurl_database
+        c_hp, c_qn, c_qs = self._compress_url(hostname_port,
+                                              query_name,
+                                              req.query_string)
+        uri = hostname_port
         if query_name:
-            crc32_query_name = "{:x}".format(
-                binascii.crc32(bytearray(query_name, 'utf-8')))
+            uri += "/" + query_name
 
-        crc32_query_string = None
-        if req.query_string:
-            crc32_query_string = "{:x}".format(
-                binascii.crc32(bytearray(req.query_string, 'utf-8')))
+            if req.query_string:
+                uri += "?" + req.query_string,
+
+        new_url = {
+            'uri': uri,
+            'hostname_port': c_hp,
+            'query_name': c_qn,
+            'query_string': c_qs,
+        }
+        query = {"uri": new_url['uri']}
+
+        urls = db.urls
+        result = urls.update(query, new_url, upsert=True)
 
         resp.status = falcon.HTTP_200
-        req.context['result'] = str(self._match(crc32_hostname_port,
-                                                crc32_query_name,
-                                                crc32_query_string))
+        req.context['result'] = str(result)
 
-    def on_post(self, req, resp):
-        pass
 
 app = falcon.API(middleware=[
     RequireJSON(),
