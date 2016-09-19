@@ -9,6 +9,8 @@ class URLInfo(object):
     bad_urls = {}
 
     def __init__(self):
+        client = MongoClient('mongodb://mongodb:27017/')
+        self.db = client.blurl_database
 
         self.bad_urls = {
             '76233f96':
@@ -17,6 +19,15 @@ class URLInfo(object):
                 'b9bfeca4': ['3fae0229', 'b9bfeca4']
             }
         }
+
+        urls = self.db.urls.find({})
+        for url in urls:
+            print("url: " + str(url))
+            self.bad_urls.setdefault(
+                url['hostname_port'],
+                [url['query_name']]).append(url['query_string'])
+
+        print(self.bad_urls)
 
     def _compress_url(self,
                       hostname_port,
@@ -69,8 +80,7 @@ class URLInfo(object):
         req.context['result'] = str(self._match(c_hp, c_qn, c_qs))
 
     def on_post(self, req, resp, hostname_port, query_name=None):
-        client = MongoClient('mongodb://mongodb:27017/')
-        db = client.blurl_database
+        db = self.db
         c_hp, c_qn, c_qs = self._compress_url(hostname_port,
                                               query_name,
                                               req.query_string)
